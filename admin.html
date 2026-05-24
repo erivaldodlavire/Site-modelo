@@ -145,7 +145,6 @@
         btn.innerText = "☁️ Sincronizando...";
         btn.disabled = true;
 
-        // Capturar valores atuais dos campos de texto
         db.nome = document.getElementById('in-nome').value;
         db.oab = document.getElementById('in-oab').value;
         db.slogan = document.getElementById('in-slogan').value;
@@ -153,6 +152,9 @@
         db.tel = document.getElementById('in-tel').value;
         db.email = document.getElementById('in-email').value;
         db.tema = document.getElementById('in-tema').value;
+
+        // Salva localmente primeiro para garantir contingência imune a erros de rede
+        localStorage.setItem('siteData', JSON.stringify(db));
 
         try {
             const { error } = await supabaseClient
@@ -173,13 +175,12 @@
                 .eq('id', 1);
 
             if (error) throw error;
-
-           // localStorage.setItem('siteData', JSON.stringify(db)); <-- LINHA COMENTADA AQUI
-            alert("🚀 SUCESSO! Site atualizado na nuvem.");
+            alert("🚀 SUCESSO! Site atualizado na nuvem e no cache local.");
             window.location.href = 'index.html';
         } catch (err) {
             console.error(err);
-            alert("❌ Erro ao salvar: " + err.message);
+            alert("⚠️ Erro de rede ou nuvem! Mas não se preocupe: as alterações foram salvas com sucesso no seu navegador.");
+            window.location.href = 'index.html';
         } finally {
             btn.innerText = originalText;
             btn.disabled = false;

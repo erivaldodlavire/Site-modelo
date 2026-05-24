@@ -121,32 +121,41 @@ async function enviarLead(event) {
     btn.disabled = false;
 }
 
-// 4. INICIALIZAÇÃO REFORÇADA
+// 4. INICIALIZAÇÃO REFORÇADA COM FALLBACK AUTOMÁTICO
 async function inicializarSite() {
     console.log("Iniciando busca de dados na nuvem...");
     
-    // Tenta buscar da nuvem (Supabase)
-    const { data, error } = await supabaseClient
-        .from('site_config')
-        .select('*')
-        .eq('id', 1)
-        .single();
+    try {
+        // Tenta buscar da nuvem (Supabase)
+        const { data, error } = await supabaseClient
+            .from('site_config')
+            .select('*')
+            .eq('id', 1)
+            .single();
 
-    if (data) {
-        console.log("Dados carregados com sucesso!");
-        aplicarDadosNoSite(data);
-    } else {
-        console.warn("Falha ao carregar nuvem, tentando local...", error);
+        if (data && !error) {
+            console.log("Dados carregados da nuvem com sucesso!");
+            aplicarDadosNoSite(data);
+        } else {
+            throw new Error("Falha na resposta da nuvem");
+        }
+    } catch (err) {
+        console.warn("Falha ao carregar nuvem, ativando contingência local...", err);
         const localData = JSON.parse(localStorage.getItem('siteData'));
         if (localData) aplicarDadosNoSite(localData);
     }
 
-    // Registrar Analytics
-    supabaseClient.from('site_visitas').insert([{ 
-        pagina: window.location.pathname, 
-        origem: document.referrer || "Direto",
-        dispositivo: window.innerWidth < 768 ? "Celular" : "Desktop"
-    }]).then(() => console.log("Visita registrada."));
+    // Registrar Analytics com tratamento de falhas
+    try {
+        await supabaseClient.from('site_visitas').insert([{ 
+            pagina: window.location.pathname, 
+            origem: document.referrer || "Direto",
+            dispositivo: window.innerWidth < 768 ? "Celular" : "Desktop"
+        }]);
+        console.log("Visita registrada.");
+    } catch(e) {
+        console.log("Não foi possível registrar a visita analítica de forma remota.");
+    }
 }
 
 // Executar ao carregar a janela
