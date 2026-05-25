@@ -100,7 +100,7 @@
     <h3>4. Fotos Principais do Perfil e Identidade Visual</h3>
     <div class="section-box">
         <div class="upload-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
-            <div><label>Ícone do Site (Favicon)</label><img id="prev-favicon" class="preview-img"><input type="file" onchange="encodeIdentidade('favicon', this)" accept="image/*"></div>
+            <div><label>Ícone do Site (Logo/Favicon)</label><img id="prev-favicon" class="preview-img"><input type="file" onchange="encodeIdentidade('favicon', this)" accept="image/*"></div>
             <div><label>Foto de Perfil Principal</label><img id="prev-perfil" class="preview-img"><input type="file" onchange="encodeIdentidade('perfil', this)" accept="image/*"></div>
             <div><label>Foto de Fundo (Banner)</label><img id="prev-fundo" class="preview-img"><input type="file" onchange="encodeIdentidade('fundo', this)" accept="image/*"></div>
         </div>
@@ -122,9 +122,17 @@
     <div class="section-box">
         <label>Tema Ativo do Escritório</label>
         <select id="in-tema">
-            <option value="tema-advogado">Advocacia Clássica (Ouro Marinho)</option>
-            <option value="tema-moderno">Advocacia Moderna (Grafite Carbono)</option>
-            <option value="tema-clean">Clean Minimalista (Soft White)</option>
+            <option value="tema-advogado">Advocacia (Ouro Marinho)</option>
+            <option value="tema-engenheiro">Engenharia (Grafite Laranja)</option>
+            <option value="tema-medico">Medicina (Azul Escuro)</option>
+            <option value="tema-psicologo">Psicologia (Roxo Claro)</option>
+            <option value="tema-contador">Contabilidade (Azul Escuro Carbono)</option>
+            <option value="tema-nutri">Nutrição (Verde Clorofila)</option>
+            <option value="tema-estetica">Estética (Nude Rose)</option>
+            <option value="tema-arquiteto">Arquitetura (Preto e Cinza)</option>
+            <option value="tema-gamer">Gamer (EriPlay Matrix)</option>
+            <option value="tema-cyberpunk">Cyberpunk Neon</option>
+            <option value="tema-youtuber">Youtuber Streamer</option>
         </select>
     </div>
 </div>
@@ -132,9 +140,6 @@
 <button class="btn-save-master" onclick="saveMaster()">SALVAR ALTERAÇÕES</button>
 
 <script>
-    // =========================================================================
-    // 🔒 CONFIGURAÇÃO DE SEGURANÇA INTERNA 
-    // =========================================================================
     const USUARIO_CORRETO   = "admin";
     const SENHA_CORRETA     = "eriplay2026";
     const WHATSAPP_DESTINO  = "5519971284797"; 
@@ -142,7 +147,7 @@
 
     let codigoSecretoGerado = null;
 
-    function ejecutarLogin() {
+    function executarLogin() {
         const uInput = document.getElementById('login-user').value;
         const pInput = document.getElementById('login-pass').value;
         const msgError = document.getElementById('login-msg');
@@ -234,13 +239,11 @@
             </div>
         `).join('');
         
-        // Renderizar fotos do espaço
         for(let i=1; i<=3; i++) {
             const preview = document.getElementById('prev-'+i);
             if(db.fotos && db.fotos['f'+i]) preview.src = db.fotos['f'+i];
         }
 
-        // Renderizar fotos de identidade visual
         if(!db.identidade) db.identidade = {favicon:"", perfil:"", fundo:""};
         if(db.identidade.favicon) document.getElementById('prev-favicon').src = db.identidade.favicon;
         if(db.identidade.perfil) document.getElementById('prev-perfil').src = db.identidade.perfil;
@@ -308,11 +311,11 @@
                 });
 
             if (error) throw error;
-            alert("🚀 SUCESSO! Site e fotos atualizados na nuvem.");
+            alert("🚀 SUCESSO! Site e fotos salvos na nuvem.");
             window.location.href = 'index.html';
         } catch (err) {
             console.error(err);
-            alert("⚠️ Alterações salvas com sucesso no navegador.");
+            alert("⚠️ Alterações aplicadas com sucesso localmente.");
             window.location.href = 'index.html';
         } finally {
             btn.innerText = originalText;
