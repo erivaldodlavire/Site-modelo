@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin EriPlay | v9.0 Oficial</title>
+    <title>Master Admin EriPlay | v9.5 Oficial</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -73,8 +73,8 @@
 </div>
 
 <header class="admin-nav">
-    <h1>Painel de Controle Gleysite v9.0</h1>
-    <p>Gestão de Conteúdo e Fotos do Escritório (Sincronizado com Nuvem)</p>
+    <h1>Painel de Controle Gleysite v9.5</h1>
+    <p>Gestão de Conteúdo, Fotos e Identidade Visual (Sincronizado com Nuvem)</p>
 </header>
 
 <div class="container">
@@ -97,26 +97,34 @@
     <h3>3. Redes Sociais e Ícones</h3>
     <div id="social-grid" class="section-box"></div>
 
-    <h3>4. Fotos do "Nosso Espaço"</h3>
+    <h3>4. Fotos Principais do Perfil e Identidade Visual</h3>
     <div class="section-box">
-        <div class="upload-grid">
-            <div><label>Foto 1</label><img id="prev-1" class="preview-img"><input type="file" onchange="encodeImg(1, this)" accept="image/*"></div>
-            <div><label>Foto 2</label><img id="prev-2" class="preview-img"><input type="file" onchange="encodeImg(2, this)" accept="image/*"></div>
-            <div><label>Foto 3</label><img id="prev-3" class="preview-img"><input type="file" onchange="encodeImg(3, this)" accept="image/*"></div>
+        <div class="upload-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
+            <div><label>Ícone do Site (Favicon)</label><img id="prev-favicon" class="preview-img"><input type="file" onchange="encodeIdentidade('favicon', this)" accept="image/*"></div>
+            <div><label>Foto de Perfil Principal</label><img id="prev-perfil" class="preview-img"><input type="file" onchange="encodeIdentidade('perfil', this)" accept="image/*"></div>
+            <div><label>Foto de Fundo (Banner)</label><img id="prev-fundo" class="preview-img"><input type="file" onchange="encodeIdentidade('fundo', this)" accept="image/*"></div>
         </div>
     </div>
 
-    <h3>5. YouTube & Publicações</h3>
+    <h3>5. Fotos do "Nosso Espaço" (Rodapé/Galeria)</h3>
+    <div class="section-box">
+        <div class="upload-grid">
+            <div><label>Espaço Foto 1</label><img id="prev-1" class="preview-img"><input type="file" onchange="encodeImg(1, this)" accept="image/*"></div>
+            <div><label>Espaço Foto 2</label><img id="prev-2" class="preview-img"><input type="file" onchange="encodeImg(2, this)" accept="image/*"></div>
+            <div><label>Espaço Foto 3</label><img id="prev-3" class="preview-img"><input type="file" onchange="encodeImg(3, this)" accept="image/*"></div>
+        </div>
+    </div>
+
+    <h3>6. YouTube & Publicações</h3>
     <div id="pub-grid"></div>
 
-    <h3>6. Estilo Visual</h3>
+    <h3>7. Estilo Visual e Temas</h3>
     <div class="section-box">
-        <label>Tema Profissional</label>
+        <label>Tema Ativo do Escritório</label>
         <select id="in-tema">
-            <option value="tema-advogado">Advocacia (Ouro Marinho)</option>
-            <option value="tema-gamer">Gamer (EriPlay)</option>
-            <option value="tema-cyberpunk">Cyberpunk</option>
-            <option value="tema-engenheiro">Engenharia</option>
+            <option value="tema-advogado">Advocacia Clássica (Ouro Marinho)</option>
+            <option value="tema-moderno">Advocacia Moderna (Grafite Carbono)</option>
+            <option value="tema-clean">Clean Minimalista (Soft White)</option>
         </select>
     </div>
 </div>
@@ -125,21 +133,20 @@
 
 <script>
     // =========================================================================
-    // 🔒 CONFIGURAÇÃO DE SEGURANÇA INTERNA (FÁCIL MANUTENÇÃO)
+    // 🔒 CONFIGURAÇÃO DE SEGURANÇA INTERNA 
     // =========================================================================
     const USUARIO_CORRETO   = "admin";
     const SENHA_CORRETA     = "eriplay2026";
-    const WHATSAPP_DESTINO  = "5519971284797"; // WhatsApp que receberá o código secreto
-    const EMAIL_DESTINO     = "gleyciane_araujo@adv.oabsp.org.br"; // E-mail de destino
+    const WHATSAPP_DESTINO  = "5519971284797"; 
+    const EMAIL_DESTINO     = "gleyciane_araujo@adv.oabsp.org.br"; 
 
     let codigoSecretoGerado = null;
 
-    function executarLogin() {
+    function ejecutarLogin() {
         const uInput = document.getElementById('login-user').value;
         const pInput = document.getElementById('login-pass').value;
         const msgError = document.getElementById('login-msg');
 
-        // Puxa do armazenamento caso tenha sido alterado na redefinição
         const savedUser = localStorage.getItem('local_user') || USUARIO_CORRETO;
         const savedPass = localStorage.getItem('local_pass') || SENHA_CORRETA;
 
@@ -153,7 +160,6 @@
     }
 
     function recuperarPorLink(tipo) {
-        // Gera um código de 6 dígitos aleatório
         codigoSecretoGerado = Math.floor(100000 + Math.random() * 900000);
         const mensagemTexto = `🔒 [SEGURANÇA GLEYSITE] Seu código secreto de verificação para redefinir o painel admin é: ${codigoSecretoGerado}`;
 
@@ -167,7 +173,6 @@
             window.open(urlEmail, '_blank');
         }
 
-        // Aguarda o administrador receber o código gerado para validar na tela
         setTimeout(() => {
             const codigoDigitado = prompt("🔑 Digite o código de verificação de 6 dígitos enviado para confirmar sua identidade:");
             
@@ -181,7 +186,7 @@
                     alert("🚀 SUCESSO! Credenciais alteradas. Entre com o novo usuário e senha.");
                 }
             } else {
-                alert("❌ Código incorreto ou processo cancelada.");
+                alert("❌ Código incorreto ou processo cancelado.");
             }
         }, 1500);
     }
@@ -204,6 +209,7 @@
         redes: Array(5).fill(""),
         pubs: Array(6).fill({l:"", d:""}),
         fotos: {f1:"", f2:"", f3:""},
+        identidade: {favicon:"", perfil:"", fundo:""},
         tema: "tema-advogado"
     };
 
@@ -228,10 +234,17 @@
             </div>
         `).join('');
         
+        // Renderizar fotos do espaço
         for(let i=1; i<=3; i++) {
             const preview = document.getElementById('prev-'+i);
             if(db.fotos && db.fotos['f'+i]) preview.src = db.fotos['f'+i];
         }
+
+        // Renderizar fotos de identidade visual
+        if(!db.identidade) db.identidade = {favicon:"", perfil:"", fundo:""};
+        if(db.identidade.favicon) document.getElementById('prev-favicon').src = db.identidade.favicon;
+        if(db.identidade.perfil) document.getElementById('prev-perfil').src = db.identidade.perfil;
+        if(db.identidade.fundo) document.getElementById('prev-fundo').src = db.identidade.fundo;
     }
 
     function addArea() { db.areas.push({t:"Nova Área", d:"Descrição aqui", i:"fas fa-star"}); renderAll(); }
@@ -243,6 +256,18 @@
         reader.onloadend = () => {
             db.fotos['f'+id] = reader.result;
             document.getElementById('prev-'+id).src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function encodeIdentidade(campo, input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if(!db.identidade) db.identidade = {favicon:"", perfil:"", fundo:""};
+            db.identidade[campo] = reader.result;
+            document.getElementById('prev-'+campo).src = reader.result;
         };
         reader.readAsDataURL(file);
     }
@@ -278,11 +303,12 @@
                     areas: db.areas,
                     pubs: db.pubs,
                     fotos: db.fotos,
+                    identidade: db.identidade,
                     redes: db.redes
                 });
 
             if (error) throw error;
-            alert("🚀 SUCESSO! Site atualizado na nuvem.");
+            alert("🚀 SUCESSO! Site e fotos atualizados na nuvem.");
             window.location.href = 'index.html';
         } catch (err) {
             console.error(err);
