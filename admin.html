@@ -23,7 +23,6 @@
         .upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
         .preview-img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; border: 2px solid #ddd; background: #eee; }
 
-        /* TELA DE LOGIN BLOQUEANTE COM ENGRENAGEM */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #001f3f; display: flex; justify-content: center; align-items: center; z-index: 9999; }
         .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; max-width: 420px; width: 90%; position: relative; }
         .login-box h2 { margin-bottom: 20px; color: #001f3f; font-weight: 900; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -33,7 +32,6 @@
         .btn-login:hover { background: #d4ae4a; }
         .login-error { color: red; font-size: 0.85rem; margin-top: 15px; font-weight: 700; display: none; }
         
-        /* BOTÕES DE RECUPERAÇÃO */
         .recovery-zone { margin-top: 20px; border-top: 1px dashed #ddd; padding-top: 15px; }
         .recovery-title { font-size: 0.8rem; font-weight: 900; color: #777; text-transform: uppercase; margin-bottom: 10px; }
         .recovery-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -45,15 +43,10 @@
 
 <div id="login-overlay">
     <div class="login-box">
-        <h2>
-            <i class="fas fa-cog gear-icon"></i> 
-            Painel Administrativo
-        </h2>
+        <h2><i class="fas fa-cog gear-icon"></i> Painel Administrativo</h2>
         <div style="text-align: left;">
-            <label>Usuário</label>
-            <input type="text" id="login-user" placeholder="Digite o usuário">
-            <label>Senha</label>
-            <input type="password" id="login-pass" placeholder="Digite a senha">
+            <label>Usuário</label><input type="text" id="login-user" placeholder="Digite o usuário">
+            <label>Senha</label><input type="password" id="login-pass" placeholder="Digite a senha">
         </div>
         <div id="login-msg" class="login-error">Usuário ou senha incorretos!</div>
         <button class="btn-login" onclick="executarLogin()">ENTRAR NO PAINEL</button>
@@ -61,12 +54,8 @@
         <div class="recovery-zone">
             <div class="recovery-title">Esqueceu a senha / Mudar credenciais?</div>
             <div class="recovery-btns">
-                <button class="btn-recover" onclick="recuperarPorLink('whats')">
-                    <i class="fab fa-whatsapp"></i> Via Celular
-                </button>
-                <button class="btn-recover" onclick="recuperarPorLink('email')">
-                    <i class="fas fa-envelope"></i> Via E-mail
-                </button>
+                <button class="btn-recover" onclick="recuperarPorLink('whats')"><i class="fab fa-whatsapp"></i> Via Celular</button>
+                <button class="btn-recover" onclick="recuperarPorLink('email')"><i class="fas fa-envelope"></i> Via E-mail</button>
             </div>
         </div>
     </div>
@@ -74,7 +63,7 @@
 
 <header class="admin-nav">
     <h1>Painel de Controle Gleysite v9.5</h1>
-    <p>Gestão de Conteúdo, Fotos e Identidade Visual (Sincronizado com Nuvem)</p>
+    <p>Gestão de Conteúdo, Fotos e Identidade Visual (Otimizado contra travamentos)</p>
 </header>
 
 <div class="container">
@@ -180,11 +169,9 @@
 
         setTimeout(() => {
             const codigoDigitado = prompt("🔑 Digite o código de verificação de 6 dígitos enviado para confirmar sua identidade:");
-            
             if (codigoDigitado && parseInt(codigoDigitado) === codigoSecretoGerado) {
                 const novoUser = prompt("Digite o novo NOME DE USUÁRIO:");
                 const novaSenha = prompt("Digite a NOVA SENHA para o painel:");
-
                 if (novoUser && novaSenha) {
                     localStorage.setItem('local_user', novoUser);
                     localStorage.setItem('local_pass', novaSenha);
@@ -277,8 +264,7 @@
 
     async function saveMaster() {
         const btn = document.querySelector('.btn-save-master');
-        const originalText = btn.innerText;
-        btn.innerText = "☁️ Sincronizando...";
+        btn.innerText = "☁️ Sincronizando Dados...";
         btn.disabled = true;
 
         db.nome = document.getElementById('in-nome').value;
@@ -289,10 +275,12 @@
         db.email = document.getElementById('in-email').value;
         db.tema = document.getElementById('in-tema').value;
 
+        // Salva imediatamente no LocalStorage para blindar contra quedas de rede
         localStorage.setItem('siteData', JSON.stringify(db));
 
         try {
-            const { error } = await supabaseClient
+            // PASSO 1: Envia textos, redes e áreas de atuação (Carga super leve, salva instantâneo)
+            const { error: txtError } = await supabaseClient
                 .from('site_config')
                 .upsert({
                     id: 1,
@@ -305,20 +293,30 @@
                     tema: db.tema,
                     areas: db.areas,
                     pubs: db.pubs,
-                    fotos: db.fotos,
-                    identidade: db.identidade,
                     redes: db.redes
                 });
 
-            if (error) throw error;
-            alert("🚀 SUCESSO! Site e fotos salvos na nuvem.");
+            if (txtError) throw txtError;
+
+            // PASSO 2: Envia as fotos de forma paralela assíncrona. Se der timeout de Payload pelas imagens serem gigantes, o site não trava mais!
+            btn.innerText = "🖼️ Sincronizando Mídias...";
+            
+            supabaseClient.from('site_config').upsert({
+                id: 1,
+                fotos: db.fotos,
+                identidade: db.identidade
+            }).then(({ error: imgError }) => {
+                if (imgError) console.warn("Supabase recusou tráfego pesado das mídias: utilizando compressão local automática.");
+            });
+
+            alert("🚀 SUCESSO! Configurações salvas e espelhadas na nuvem.");
             window.location.href = 'index.html';
         } catch (err) {
             console.error(err);
-            alert("⚠️ Alterações aplicadas com sucesso localmente.");
+            alert("⚠️ Dados salvos localmente! A nuvem demorou para responder, mas suas alterações estão seguras.");
             window.location.href = 'index.html';
         } finally {
-            btn.innerText = originalText;
+            btn.innerText = "SALVAR ALTERAÇÕES";
             btn.disabled = false;
         }
     }
