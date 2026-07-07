@@ -12,10 +12,10 @@
 
 window.SUPABASE_CONFIG = {
     // URL do projeto (Dashboard Supabase → Settings → API)
-    url: 'https://ueduzgoewlivkluiyqql.supabase.co',
+    url: 'https://bguslrxqkrlrueafetzh.supabase.co',
 
-    // Chave pública "anon" (Dashboard Supabase → Settings → API)
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlZHV6Z29ld2xpdmtsdWl5cXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxODAxMzAsImV4cCI6MjA4ODc1NjEzMH0.EM2s38El81fZYT-WVrxa7P_xX0e58EHQxdwreVgQecA',
+    // Chave pública (formato novo "publishable" — Dashboard → Settings → API Keys)
+    anonKey: 'sb_publishable_ZpEyI4ldSV5-ZbXKZFuYyQ_YRPXB4mz',
 
     // Identidade do cliente desta instância (usado em payloads do n8n e no título do login)
     cliente: {
