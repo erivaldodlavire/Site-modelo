@@ -112,6 +112,16 @@ textarea { resize: vertical; min-height: 90px; }
 .upload-item .vazio { color: #a5adba; font-size: 1.6rem; position: absolute; }
 .upload-item p { font-size: 0.72rem; font-weight: 700; margin-top: 8px; color: #5a6472; text-transform: uppercase; }
 
+/* Botão ✕ para remover foto da galeria do espaço */
+.btn-x-foto {
+    position: absolute; top: 6px; right: 6px; z-index: 3;
+    width: 26px; height: 26px; border-radius: 50%; border: none;
+    background: var(--erro); color: #fff; font-size: 1rem; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.btn-x-foto:hover { transform: scale(1.1); }
+
 /* --------------------------- LISTAS DINÂMICAS ---------------------------- */
 .item-dinamico {
     display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;

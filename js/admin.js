@@ -49,7 +49,7 @@
         nome: '', oab: '', slogan: '', sobre: '',
         endereco: '', tel: '', email: '', horario: '', copy: '', whats: '',
         identidade: { perfil: '', favicon: '', fundo: '' },
-        fotos: { f1: '', f2: '', f3: '' },
+        fotos: { lista: [] },
         areas: [], depoimentos: [], pubs: [], redes: [],
         layout: CATALOGO_SECOES.map(s => ({ id: s.id, visivel: true })),
         aparencia: { tema: ThemeEngine.TEMA_PADRAO, custom: null },
@@ -65,6 +65,10 @@
         // Garante que seções novas do template entrem no layout de configs antigas
         const idsSalvos = new Set((estado.layout || []).map(s => s.id));
         CATALOGO_SECOES.forEach(s => { if (!idsSalvos.has(s.id)) estado.layout.push({ id: s.id, visivel: true }); });
+        // Migração: formato antigo {f1,f2,f3} vira galeria ilimitada {lista:[]}
+        if (!Array.isArray(estado.fotos?.lista)) {
+            estado.fotos = { lista: ['f1', 'f2', 'f3'].map(k => estado.fotos?.[k]).filter(Boolean) };
+        }
     }
     const limparNulos = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== null));
 
@@ -129,40 +133,80 @@
         return estado[a]?.[b] || '';
     };
 
+    // Despachante único de upload: quem pede a imagem define o que fazer
+    // com o base64 resultante (moldura fixa OU galeria do espaço).
+    let acaoUpload = null;
+
+    function pedirImagem(largura, aplicar) {
+        acaoUpload = { largura, aplicar };
+        $('#input-upload').click();
+    }
+
     function ligarUploads() {
         const inputArquivo = $('#input-upload');
-        let chaveAlvo = null;
 
-        document.querySelectorAll('.upload-item').forEach(item => {
+        // Molduras fixas da Identidade Visual (logo, perfil, fundo)
+        document.querySelectorAll('.upload-item[data-chave]').forEach(item => {
             item.querySelector('.moldura').addEventListener('click', () => {
-                chaveAlvo = item.dataset.chave;
-                inputArquivo.click();
+                const chave = item.dataset.chave;
+                // Fundo do hero merece mais resolução; logos podem ser menores
+                const largura = chave === 'identidade.fundo' ? 1600
+                              : chave === 'identidade.favicon' ? 400 : 1280;
+                pedirImagem(largura, (b64) => { setCaminho(chave, b64); preencherUploads(); });
             });
         });
 
         inputArquivo.addEventListener('change', async () => {
             const arquivo = inputArquivo.files[0];
-            if (!arquivo || !chaveAlvo) return;
+            if (!arquivo || !acaoUpload) return;
             try {
-                // Fundo do hero merece mais resolução; logos podem ser menores
-                const largura = chaveAlvo === 'identidade.fundo' ? 1600
-                              : chaveAlvo === 'identidade.favicon' ? 400 : 1280;
-                const base64 = await otimizarImagem(arquivo, largura);
-                setCaminho(chaveAlvo, base64);
-                preencherUploads();
+                const base64 = await otimizarImagem(arquivo, acaoUpload.largura);
+                acaoUpload.aplicar(base64);
                 toast('Imagem otimizada! Clique em Salvar para publicar.', 'sucesso');
             } catch { toast('Não consegui ler essa imagem.', 'erro'); }
             inputArquivo.value = ''; // permite reenviar o mesmo arquivo
+            acaoUpload = null;
         });
     }
 
     function preencherUploads() {
-        document.querySelectorAll('.upload-item').forEach(item => {
+        document.querySelectorAll('.upload-item[data-chave]').forEach(item => {
             const src = getCaminho(item.dataset.chave);
             const img = item.querySelector('img');
             img.src = src;
             item.querySelector('.vazio').style.display = src ? 'none' : '';
         });
+    }
+
+    /* --- Galeria "Nosso Espaço": fotos ILIMITADAS --- */
+    function renderizarGaleriaEspaco() {
+        const galeria = $('#galeria-espaco');
+        galeria.innerHTML = (estado.fotos.lista || []).map((src, i) => `
+            <div class="upload-item foto-espaco" data-indice="${i}">
+                <div class="moldura">
+                    <img src="${src}" alt="">
+                    <button type="button" class="btn-x-foto" title="Remover foto">&times;</button>
+                </div>
+                <p>Foto ${i + 1}</p>
+            </div>`).join('');
+
+        galeria.querySelectorAll('.foto-espaco').forEach(item => {
+            const i = +item.dataset.indice;
+            // Clicar na foto = substituir aquela posição
+            item.querySelector('.moldura').addEventListener('click', (e) => {
+                if (e.target.closest('.btn-x-foto')) return;
+                pedirImagem(1280, (b64) => { estado.fotos.lista[i] = b64; renderizarGaleriaEspaco(); });
+            });
+            item.querySelector('.btn-x-foto').addEventListener('click', () => {
+                estado.fotos.lista.splice(i, 1);
+                renderizarGaleriaEspaco();
+            });
+        });
+    }
+
+    function ligarGaleriaEspaco() {
+        $('#btn-add-foto-espaco').addEventListener('click', () =>
+            pedirImagem(1280, (b64) => { estado.fotos.lista.push(b64); renderizarGaleriaEspaco(); }));
     }
 
     /* ==================================================================== */
@@ -299,7 +343,7 @@
             <div class="grade-temas">
                 ${ThemeEngine.listar().filter(t => t.cat === cat).map(t => `
                     <div class="tema-card ${estado.aparencia.tema === t.id ? 'selecionado' : ''}" data-tema="${t.id}">
-                        <div class="amostra" style="background:${t.primary}; color:${t.accent}"><i class="fas ${t.icone}"></i></div>
+                        <div class="amostra" style="background:${t.grad || t.primary}; color:${t.grad ? '#0b0b0b' : t.accent}"><i class="fas ${t.icone}"></i></div>
                         <div class="nome">${t.nome}</div>
                     </div>`).join('')}
             </div>`).join('');
@@ -459,6 +503,8 @@
     preencherCampos();
     preencherUploads();
     ligarUploads();
+    renderizarGaleriaEspaco();
+    ligarGaleriaEspaco();
     ligarListas();
     renderizarLayout();
     renderizarTemas();

@@ -96,6 +96,7 @@ window.ThemeEngine = (() => {
             primary: '#03001c', accent: '#fee715', bg: '#050505', surface: '#101018', texto: '#e8e8f0',
             fontDisplay: "'Orbitron', sans-serif", fontBody: "'Inter', sans-serif",
             escuro: true,
+            grad: 'linear-gradient(135deg, #fee715, #7df9ff, #fee715)',
         },
         gamer: {
             nome: 'Gamer', cat: 'Especiais', icone: 'fa-gamepad', audio: 'arcade',
@@ -112,6 +113,30 @@ window.ThemeEngine = (() => {
             nome: 'Minimalista Premium', cat: 'Especiais', icone: 'fa-circle-half-stroke', audio: 'elegante',
             primary: '#111827', accent: '#9ca3af', bg: '#fbfbfb', surface: '#f1f2f4', texto: '#1f2937',
             fontDisplay: "'Inter', sans-serif", fontBody: "'Inter', sans-serif",
+        },
+        cyberouro: {
+            // Preto profundo + ouro neon com traçados luminosos (gaming élite)
+            nome: 'Cyber Élite (Ouro)', cat: 'Especiais', icone: 'fa-chess-rook', audio: 'digital',
+            primary: '#0d0a05', accent: '#e8c15a', bg: '#0b0906', surface: '#17120a', texto: '#f0e6cf',
+            fontDisplay: "'Orbitron', sans-serif", fontBody: "'Inter', sans-serif",
+            escuro: true,
+            grad: 'linear-gradient(135deg, #7a5c1e, #e8c15a, #fff3c4, #b8860b)',
+        },
+        neonvenom: {
+            // Verde ácido + roxo elétrico sobre preto (cyberpunk venenoso)
+            nome: 'Neon Venom (Verde/Roxo)', cat: 'Especiais', icone: 'fa-biohazard', audio: 'digital',
+            primary: '#0a0212', accent: '#39ff14', bg: '#070310', surface: '#140a24', texto: '#e6ffe9',
+            fontDisplay: "'Orbitron', sans-serif", fontBody: "'Inter', sans-serif",
+            escuro: true,
+            grad: 'linear-gradient(135deg, #39ff14, #00e5a0, #9d00ff)',
+        },
+        synthwave: {
+            // Ciano → rosa → roxo, estética retrofuturista anos 80
+            nome: 'Synthwave', cat: 'Especiais', icone: 'fa-wave-square', audio: 'arcade',
+            primary: '#12002b', accent: '#ff2bd6', bg: '#0d0020', surface: '#1c0b3a', texto: '#f3e8ff',
+            fontDisplay: "'Orbitron', sans-serif", fontBody: "'Inter', sans-serif",
+            escuro: true,
+            grad: 'linear-gradient(135deg, #00f0ff, #ff2bd6, #7b2bff)',
         },
     };
 
@@ -132,6 +157,11 @@ window.ThemeEngine = (() => {
         const raiz = document.documentElement.style;
         raiz.setProperty('--primary', custom.primary || tema.primary);
         raiz.setProperty('--accent', custom.accent || tema.accent);
+        // Gradiente de destaque: temas premium definem o seu (textura degradê);
+        // os demais ganham um degradê metálico derivado do próprio accent
+        const acc = custom.accent || tema.accent;
+        raiz.setProperty('--accent-grad', (!custom.accent && tema.grad) ? tema.grad
+            : `linear-gradient(135deg, color-mix(in srgb, ${acc} 70%, #000), ${acc}, color-mix(in srgb, ${acc} 65%, #fff), ${acc})`);
         raiz.setProperty('--bg', custom.bg || tema.bg);
         raiz.setProperty('--surface', tema.surface);
         raiz.setProperty('--texto', tema.texto);

@@ -22,6 +22,7 @@
     --whatsapp: #25d366;
     --card: #ffffff;
     --sombra-card: 0 10px 30px rgba(0, 0, 0, 0.06);
+    --accent-grad: linear-gradient(135deg, #bf953f, #e5c05b, #fcf6ba, #aa771c);
 }
 
 /* Temas escuros (cyberpunk, gamer): o theme-engine marca o body e o CSS reage */
@@ -116,7 +117,7 @@ h2 {
 }
 h2::after {
     content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 84px; height: 3px; background: var(--accent); border-radius: 2px;
+    width: 84px; height: 3px; background: var(--accent-grad); border-radius: 2px;
 }
 #sobre p { max-width: 850px; margin: 0 auto; font-size: 1.02rem; }
 
@@ -131,7 +132,7 @@ h2::after {
 .card h3 { margin-bottom: 8px; }
 .gold-3d {
     font-size: 44px; color: var(--accent); margin-bottom: 18px; display: inline-block;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 70%, #000), var(--accent), color-mix(in srgb, var(--accent) 65%, #fff), var(--accent));
+    background: var(--accent-grad);
     background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
@@ -175,6 +176,36 @@ h2::after {
     color: #fff; font-size: 0.9rem;
 }
 .insta-placeholder i { font-size: 2rem; }
+
+/* ============================ CARROSSEL =================================
+ * Usado em "Nosso Espaço" e "Publicações": 4 itens à vista no desktop,
+ * rolagem lateral por arraste/toque + setas. As setas só aparecem quando
+ * há mais conteúdo do que cabe (classe .tem-overflow, gerida pelo app.js). */
+.carrossel { position: relative; }
+.carrossel-trilha {
+    display: flex; gap: 20px;
+    overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 6px 4px 14px;
+    scrollbar-width: none; -ms-overflow-style: none;
+}
+.carrossel-trilha::-webkit-scrollbar { display: none; }
+.carrossel-trilha > * { flex: 0 0 clamp(240px, calc(25% - 15px), 420px); scroll-snap-align: start; }
+.carrossel-trilha .office-photo img { height: 240px; }
+
+.seta-carrossel {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
+    width: 46px; height: 46px; border-radius: 50%;
+    border: 2px solid var(--accent); background: var(--primary); color: var(--accent);
+    font-size: 1rem; cursor: pointer;
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s, opacity 0.2s;
+}
+.carrossel.tem-overflow .seta-carrossel { display: flex; }
+.seta-carrossel:hover:not(:disabled) { transform: translateY(-50%) scale(1.08); }
+.seta-carrossel:disabled { opacity: 0.3; cursor: default; }
+.seta-carrossel.esquerda { left: -14px; }
+.seta-carrossel.direita { right: -14px; }
 
 /* ========================= INFO DE CONTATO ============================== */
 .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 26px; margin-bottom: 40px; }
@@ -255,6 +286,9 @@ footer {
     .hero-btns { flex-direction: column; align-items: center; }
     .full-section { padding: 64px 6%; }
     .whats-flutuante { bottom: 22px; right: 22px; }
+    .carrossel-trilha > * { flex-basis: 80vw; }
+    .seta-carrossel.esquerda { left: 2px; }
+    .seta-carrossel.direita { right: 2px; }
 }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

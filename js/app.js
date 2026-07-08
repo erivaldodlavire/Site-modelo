@@ -96,11 +96,15 @@
         if (idv.favicon) { $('#edit-logo').src = idv.favicon; $('#site-favicon').href = idv.favicon; }
         if (idv.fundo) $('#hero').style.backgroundImage = `url('${idv.fundo}')`;
 
-        /* --- Fotos do espaço --- */
-        for (let i = 1; i <= 3; i++) {
-            const src = d.fotos?.['f' + i];
-            const img = document.getElementById('img-espaco-' + i);
-            if (img && src) img.src = src;
+        /* --- Fotos do espaço: galeria ILIMITADA (retrocompatível com f1..f3) --- */
+        const fotos = Array.isArray(d.fotos?.lista) && d.fotos.lista.length
+            ? d.fotos.lista
+            : ['f1', 'f2', 'f3'].map(k => d.fotos?.[k]).filter(Boolean);
+        if (fotos.length) {
+            $('#container-fotos-espaco').innerHTML = fotos.map(src => `
+                <div class="office-photo"><img src="${esc(src)}" alt="Nosso espaço" loading="lazy"></div>`).join('');
+        } else {
+            $('#nosso-espaco').style.display = 'none'; // sem fotos → seção some
         }
 
         /* --- Áreas de atuação --- */
@@ -281,8 +285,40 @@
         document.querySelectorAll('.reveal').forEach(el => observador.observe(el));
 
         // Cascata: numera os filhos das grades p/ o CSS escalonar os delays
-        document.querySelectorAll('.cards-grid, .photo-grid, .pub-grid, .info-grid').forEach(grade => {
+        document.querySelectorAll('.cards-grid, .carrossel-trilha, .info-grid').forEach(grade => {
             [...grade.children].forEach((filho, i) => filho.style.setProperty('--i', i));
+        });
+    }
+
+    /* ==================================================================== */
+    /* 7) CARROSSEL — setas + rolagem suave para Espaço e Publicações       */
+    /* ==================================================================== */
+    function ligarCarrosseis() {
+        document.querySelectorAll('[data-carrossel]').forEach(carrossel => {
+            const trilha = carrossel.querySelector('.carrossel-trilha');
+            const esq = carrossel.querySelector('.esquerda');
+            const dir = carrossel.querySelector('.direita');
+
+            // Passo = largura de 1 item + gap (rola de card em card)
+            const passo = () => {
+                const item = trilha.firstElementChild;
+                return item ? item.getBoundingClientRect().width + 20 : 320;
+            };
+            esq.addEventListener('click', () => trilha.scrollBy({ left: -passo(), behavior: 'smooth' }));
+            dir.addEventListener('click', () => trilha.scrollBy({ left: passo(), behavior: 'smooth' }));
+
+            // Setas só existem se houver overflow; desabilitam nas pontas
+            const atualizar = () => {
+                const temOverflow = trilha.scrollWidth > trilha.clientWidth + 4;
+                carrossel.classList.toggle('tem-overflow', temOverflow);
+                esq.disabled = trilha.scrollLeft <= 4;
+                dir.disabled = trilha.scrollLeft + trilha.clientWidth >= trilha.scrollWidth - 4;
+            };
+            trilha.addEventListener('scroll', atualizar, { passive: true });
+            window.addEventListener('resize', atualizar);
+            // Conteúdo chega dinamicamente (config da nuvem) → reavalia sozinho
+            new MutationObserver(atualizar).observe(trilha, { childList: true });
+            atualizar();
         });
     }
 
@@ -305,6 +341,7 @@
         ligarRastreioDeCliques();
         ligarFormulario();
         ligarReveal();
+        ligarCarrosseis();
 
         document.body.classList.remove('carregando'); // "acende" o hero
     }

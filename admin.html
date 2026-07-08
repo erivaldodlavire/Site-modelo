@@ -79,12 +79,10 @@
                     </div>
                 </div>
                 <div class="bloco">
-                    <h3><i class="fas fa-building"></i> Fotos do Espaço</h3>
-                    <div class="grade-uploads">
-                        <div class="upload-item" data-chave="fotos.f1"><div class="moldura"><i class="fas fa-plus vazio"></i><img src="" alt=""></div><p>Foto 1</p></div>
-                        <div class="upload-item" data-chave="fotos.f2"><div class="moldura"><i class="fas fa-plus vazio"></i><img src="" alt=""></div><p>Foto 2</p></div>
-                        <div class="upload-item" data-chave="fotos.f3"><div class="moldura"><i class="fas fa-plus vazio"></i><img src="" alt=""></div><p>Foto 3</p></div>
-                    </div>
+                    <h3><i class="fas fa-building"></i> Fotos do Espaço (galeria ilimitada)</h3>
+                    <p class="dica">Adicione quantas fotos quiser — o site exibe em carrossel com setas (4 por vez no desktop). Clique numa foto para substituí-la, ou no ✕ para removê-la.</p>
+                    <div class="grade-uploads" id="galeria-espaco"></div>
+                    <button type="button" class="btn-adicionar" id="btn-add-foto-espaco" style="margin-top:14px"><i class="fas fa-plus"></i> Adicionar Foto</button>
                 </div>
                 <!-- Input de arquivo único, invisível, reutilizado por todas as molduras -->
                 <input type="file" id="input-upload" accept="image/*" hidden>
