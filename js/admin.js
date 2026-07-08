@@ -181,6 +181,7 @@
     /* --- Galeria "Nosso Espaço": fotos ILIMITADAS --- */
     function renderizarGaleriaEspaco() {
         const galeria = $('#galeria-espaco');
+        if (!galeria) return; // admin.html desatualizado em cache — segue o baile
         galeria.innerHTML = (estado.fotos.lista || []).map((src, i) => `
             <div class="upload-item foto-espaco" data-indice="${i}">
                 <div class="moldura">
@@ -205,7 +206,9 @@
     }
 
     function ligarGaleriaEspaco() {
-        $('#btn-add-foto-espaco').addEventListener('click', () =>
+        const btn = $('#btn-add-foto-espaco');
+        if (!btn) return; // idem: nunca derrubar o painel por um botão ausente
+        btn.addEventListener('click', () =>
             pedirImagem(1280, (b64) => { estado.fotos.lista.push(b64); renderizarGaleriaEspaco(); }));
     }
 
@@ -500,14 +503,20 @@
     /* INICIALIZAÇÃO                                                        */
     /* ==================================================================== */
     await carregar();
-    preencherCampos();
-    preencherUploads();
-    ligarUploads();
-    renderizarGaleriaEspaco();
-    ligarGaleriaEspaco();
-    ligarListas();
-    renderizarLayout();
-    renderizarTemas();
-    ligarAudio();
-    aplicarPreview();   // painel abre já com o tema publicado do cliente
+
+    // Cada passo roda isolado: se um falhar, loga o aviso e o RESTO do painel
+    // continua funcionando (nada de listas sumindo em bloco).
+    const passo = (nome, fn) => {
+        try { fn(); } catch (erro) { console.warn(`[admin] Passo "${nome}" falhou:`, erro); }
+    };
+    passo('campos', preencherCampos);
+    passo('uploads', preencherUploads);
+    passo('uploads-eventos', ligarUploads);
+    passo('galeria-espaco', renderizarGaleriaEspaco);
+    passo('galeria-espaco-eventos', ligarGaleriaEspaco);
+    passo('listas-dinamicas', ligarListas);
+    passo('layout-builder', renderizarLayout);
+    passo('galeria-temas', renderizarTemas);
+    passo('audio', ligarAudio);
+    passo('preview-tema', aplicarPreview);   // painel abre já com o tema do cliente
 })();
