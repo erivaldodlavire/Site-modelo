@@ -74,6 +74,15 @@
     const setTexto = (id, valor) => { const el = document.getElementById(id); if (el && valor) el.innerText = valor; };
     const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 
+    // Executa um bloco de renderização isoladamente: se um falhar, loga no
+    // console e SEGUE para o próximo (redes sociais nunca morrem por culpa
+    // de uma publicação com dado estranho, por exemplo).
+    function blindado(nomeBloco, fn) {
+        try { fn(); } catch (erro) {
+            console.warn(`[app.js] Bloco "${nomeBloco}" falhou e foi pulado:`, erro);
+        }
+    }
+
     function aplicarConteudo(d) {
         /* --- Textos base --- */
         setTexto('edit-nome', d.nome);
@@ -97,79 +106,93 @@
         if (idv.fundo) $('#hero').style.backgroundImage = `url('${idv.fundo}')`;
 
         /* --- Fotos do espaço: galeria ILIMITADA (retrocompatível com f1..f3) --- */
-        const fotos = Array.isArray(d.fotos?.lista) && d.fotos.lista.length
-            ? d.fotos.lista
-            : ['f1', 'f2', 'f3'].map(k => d.fotos?.[k]).filter(Boolean);
-        if (fotos.length) {
-            $('#container-fotos-espaco').innerHTML = fotos.map(src => `
-                <div class="office-photo"><img src="${esc(src)}" alt="Nosso espaço" loading="lazy"></div>`).join('');
-        } else {
-            $('#nosso-espaco').style.display = 'none'; // sem fotos → seção some
-        }
+        blindado('fotos do espaço', () => {
+            const fotos = Array.isArray(d.fotos?.lista) && d.fotos.lista.length
+                ? d.fotos.lista
+                : ['f1', 'f2', 'f3'].map(k => d.fotos?.[k]).filter(Boolean);
+            if (fotos.length) {
+                $('#container-fotos-espaco').innerHTML = fotos.map(src => `
+                    <div class="office-photo"><img src="${esc(src)}" alt="Nosso espaço" loading="lazy"></div>`).join('');
+            } else {
+                $('#nosso-espaco').style.display = 'none'; // sem fotos → seção some
+            }
+        });
 
         /* --- Áreas de atuação --- */
-        if (d.areas?.length) {
-            $('#container-servicos').innerHTML = d.areas.map((a, i) => `
-                <div class="card" style="--i:${i}">
-                    <i class="${esc(a.i)} gold-3d"></i>
-                    <h3>${esc(a.t)}</h3>
-                    <p>${esc(a.d)}</p>
-                </div>`).join('');
-        }
+        blindado('áreas', () => {
+            if (d.areas?.length) {
+                $('#container-servicos').innerHTML = d.areas.map((a, i) => `
+                    <div class="card" style="--i:${i}">
+                        <i class="${esc(a.i)} gold-3d"></i>
+                        <h3>${esc(a.t)}</h3>
+                        <p>${esc(a.d)}</p>
+                    </div>`).join('');
+            }
+        });
 
         /* --- Depoimentos --- */
-        const contDep = $('#container-depoimentos');
-        if (d.depoimentos?.length) {
-            contDep.innerHTML = d.depoimentos.map(dep => `
-                <div class="review-card">
-                    <div class="stars">⭐⭐⭐⭐⭐</div>
-                    <p>"${esc(dep.t)}"</p>
-                    <span class="client-name">— ${esc(dep.n)}</span>
-                </div>`).join('');
-        } else {
-            // Sem depoimentos cadastrados → seção some sozinha (site nunca fica "oco")
-            $('#depoimentos').style.display = 'none';
-        }
+        blindado('depoimentos', () => {
+            const contDep = $('#container-depoimentos');
+            if (d.depoimentos?.length) {
+                contDep.innerHTML = d.depoimentos.map(dep => `
+                    <div class="review-card">
+                        <div class="stars">⭐⭐⭐⭐⭐</div>
+                        <p>"${esc(dep.t)}"</p>
+                        <span class="client-name">— ${esc(dep.n)}</span>
+                    </div>`).join('');
+            } else {
+                // Sem depoimentos cadastrados → seção some sozinha (site nunca fica "oco")
+                $('#depoimentos').style.display = 'none';
+            }
+        });
 
         /* --- Publicações (YouTube com thumb automática / Instagram) --- */
-        const contPub = $('#container-publicacoes');
-        const pubs = (d.pubs || []).filter(p => p.l?.trim());
-        if (pubs.length) {
-            contPub.innerHTML = pubs.map(p => {
-                let thumb;
-                if (p.l.includes('instagram.com')) {
-                    thumb = `<div class="insta-placeholder"><i class="fab fa-instagram"></i> Ver no Instagram</div>`;
-                } else {
-                    // Extrai o ID de qualquer formato de link do YouTube
-                    const id = (p.l.match(/(?:shorts\/|v=|youtu\.be\/)([\w-]{6,})/) || [])[1] || '';
-                    thumb = `<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy">
-                             <div class="play-overlay"><i class="fab fa-youtube"></i></div>`;
-                }
-                return `<div class="pub-container">
-                            <p class="pub-desc">${esc(p.d)}</p>
-                            <div class="pub-item"><a href="${esc(p.l)}" target="_blank" rel="noopener" data-evento="pub_click">${thumb}</a></div>
-                        </div>`;
-            }).join('');
-        } else {
-            $('#publicacoes').style.display = 'none';
-        }
+        blindado('publicações', () => {
+            const contPub = $('#container-publicacoes');
+            const pubs = (d.pubs || []).filter(p => p.l?.trim());
+            if (pubs.length) {
+                contPub.innerHTML = pubs.map(p => {
+                    let thumb;
+                    if (p.l.includes('instagram.com')) {
+                        thumb = `<div class="insta-placeholder"><i class="fab fa-instagram"></i> Ver no Instagram</div>`;
+                    } else {
+                        // Extrai o ID de qualquer formato de link do YouTube
+                        const id = (p.l.match(/(?:shorts\/|v=|youtu\.be\/)([\w-]{6,})/) || [])[1] || '';
+                        thumb = `<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy">
+                                 <div class="play-overlay"><i class="fab fa-youtube"></i></div>`;
+                    }
+                    return `<div class="pub-container">
+                                <p class="pub-desc">${esc(p.d)}</p>
+                                <div class="pub-item"><a href="${esc(p.l)}" target="_blank" rel="noopener" data-evento="pub_click">${thumb}</a></div>
+                            </div>`;
+                }).join('');
+            } else {
+                $('#publicacoes').style.display = 'none';
+            }
+        });
 
         /* --- Redes sociais (ícone detectado pela URL) --- */
-        const icone = (u) => u.includes('instagram') ? 'fab fa-instagram'
-            : u.includes('youtube') ? 'fab fa-youtube'
-            : (u.includes('whatsapp') || u.includes('wa.me')) ? 'fab fa-whatsapp'
-            : u.includes('linkedin') ? 'fab fa-linkedin'
-            : u.includes('facebook') ? 'fab fa-facebook'
-            : (u.includes('x.com') || u.includes('twitter')) ? 'fab fa-x-twitter'
-            : 'fas fa-link';
+        blindado('redes sociais', () => {
+            const icone = (u) => u.includes('instagram') ? 'fab fa-instagram'
+                : (u.includes('youtube') || u.includes('youtu.be')) ? 'fab fa-youtube'
+                : (u.includes('whatsapp') || u.includes('wa.me')) ? 'fab fa-whatsapp'
+                : u.includes('linkedin') ? 'fab fa-linkedin'
+                : u.includes('facebook') ? 'fab fa-facebook'
+                : u.includes('tiktok') ? 'fab fa-tiktok'
+                : (u.includes('t.me') || u.includes('telegram')) ? 'fab fa-telegram'
+                : u.includes('threads') ? 'fab fa-threads'
+                : u.includes('kwai') ? 'fas fa-video'
+                : (u.includes('x.com') || u.includes('twitter')) ? 'fab fa-x-twitter'
+                : 'fas fa-link';
 
-        const redes = (d.redes || []).filter(u => u?.trim());
-        if (redes.length) {
-            const html = redes.map(u =>
-                `<a href="${esc(u)}" target="_blank" rel="noopener" data-evento="rede_social"><i class="${icone(u)}"></i></a>`).join('');
-            $('#edit-redes-sociais-icones').innerHTML = html;
-            $('#edit-social-links-footer').innerHTML = html;
-        }
+            const redes = (d.redes || []).filter(u => u?.trim());
+            if (redes.length) {
+                const html = redes.map(u =>
+                    `<a href="${esc(u)}" target="_blank" rel="noopener" data-evento="rede_social"><i class="${icone(u)}"></i></a>`).join('');
+                $('#edit-redes-sociais-icones').innerHTML = html;
+                $('#edit-social-links-footer').innerHTML = html;
+            }
+        });
 
         /* --- WhatsApp: todos os elementos [data-whats] apontam pro número --- */
         if (d.whats) {
