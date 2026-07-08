@@ -146,7 +146,7 @@
             }
         });
 
-        /* --- Publicações (YouTube com thumb automática / Instagram) --- */
+        /* --- Publicações (YouTube com thumb automática / Instagram Real) --- */
         blindado('publicações', () => {
             const contPub = $('#container-publicacoes');
             const pubs = (d.pubs || []).filter(p => p.l?.trim());
@@ -154,9 +154,12 @@
                 contPub.innerHTML = pubs.map(p => {
                     let thumb;
                     if (p.l.includes('instagram.com')) {
-                        thumb = `<div class="insta-placeholder"><i class="fab fa-instagram"></i> Ver no Instagram</div>`;
+                        const urlLimpa = p.l.split('?')[0];
+                        thumb = `<div class="insta-container-media">
+                                    <img src="${urlLimpa}media/?size=m" alt="Publicação Instagram" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\'insta-placeholder\'><i class=\'fab fa-instagram\'></i> Ver Vídeo no Instagram</div>'">
+                                    <div class="play-overlay"><i class="fab fa-instagram"></i></div>
+                                 </div>`;
                     } else {
-                        // Extrai o ID de qualquer formato de link do YouTube
                         const id = (p.l.match(/(?:shorts\/|v=|youtu\.be\/)([\w-]{6,})/) || [])[1] || '';
                         thumb = `<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy">
                                  <div class="play-overlay"><i class="fab fa-youtube"></i></div>`;
