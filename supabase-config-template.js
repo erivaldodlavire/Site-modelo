@@ -25,10 +25,10 @@ window.SUPABASE_CONFIG = {
 
     // Identidade do cliente desta instância
     cliente: {
-        id: 'gleyciane-araujo',            // slug único
-        nome: 'Gleyciane Araújo',
-        marca: 'Advocacia',
-        schema: 'gleyciane',               // ← NOVO: qual schema isolado usar
+        id: 'seunomeid',            // slug único
+        nome: 'seu nome aqui',
+        marca: 'Marca profissao',
+        schema: 'seunomeaqui',               // ← NOVO: qual schema isolado usar
                                            // Cada cliente aponta pro seu próprio schema
     },
 

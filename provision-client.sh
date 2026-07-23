@@ -4,7 +4,7 @@
 # PROVISION-CLIENT.SH — Automação de novo cliente multi-tenant
 ################################################################################
 # USO:
-#   ./provision-client.sh gleyciane "Gleyciane Araújo" gleyciane@adv.oabsp.org.br
+#   ./provision-client.sh Nome aqui "Nome aqui Araújo" Nome aqui@adv.oabsp.org.br
 #
 # O que faz:
 #   1. Cria schema isolado no Supabase (SQL)
@@ -44,7 +44,7 @@ CLIENT_EMAIL="${3:-}"
 # Validação
 if [ -z "$CLIENT_SLUG" ] || [ -z "$CLIENT_NOME" ] || [ -z "$CLIENT_EMAIL" ]; then
     echo -e "${RED}Uso: $0 <slug> <nome> <email>${NC}"
-    echo "Exemplo: $0 gleyciane 'Gleyciane Araújo' gleyciane@adv.oabsp.org.br"
+    echo "Exemplo: $0 Nome aqui 'Nome aqui Araújo' Nome aqui@gmail.com.br"
     exit 1
 fi
 
@@ -102,9 +102,9 @@ cd "$WORK_DIR"
 echo -e "\n${YELLOW}[3/5] Atualizando configuração do Supabase...${NC}"
 
 # Usa sed para atualizar o schema no config
-sed -i.bak "s/schema: 'gleyciane'/schema: '$CLIENT_SLUG'/g" js/supabase-config.js
-sed -i.bak "s/nome: 'Gleyciane Araújo'/nome: '$CLIENT_NOME'/g" js/supabase-config.js
-sed -i.bak "s/id: 'gleyciane-araujo'/id: '$CLIENT_SLUG'/g" js/supabase-config.js
+sed -i.bak "s/schema: 'Nome aqui'/schema: '$CLIENT_SLUG'/g" js/supabase-config.js
+sed -i.bak "s/nome: 'Nome aqui Araújo'/nome: '$CLIENT_NOME'/g" js/supabase-config.js
+sed -i.bak "s/id: 'Nome aqui-sobre nome'/id: '$CLIENT_SLUG'/g" js/supabase-config.js
 
 rm -f js/supabase-config.js.bak
 echo -e "${GREEN}✓ Configuração atualizada${NC}"
