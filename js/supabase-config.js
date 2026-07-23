@@ -1,37 +1,23 @@
 /* ============================================================================
- * SUPABASE-CONFIG.JS — Configuração Central (Multi-Tenant)
- * ============================================================================
- * WHITE-LABEL: Este é o ÚNICO arquivo que muda entre clientes/instâncias.
- * 
- * Para Gleyciane: schema 'gleyciane'
- * Para Erivaldo:  schema 'erivaldo'
- * Para Cliente X: schema 'cliente_x'
- *
- * SEGURANÇA: A "anon key" é PÚBLICA (RLS + schema isolado protegem).
- * ========================================================================== */
+ * SUPABASE-CONFIG.JS — Configuração Central (Multi-Tenant) — TEMPLATE PADRÃO
+ * ============================================================================ */
 
 window.SUPABASE_CONFIG = {
-    // URL do projeto (MESMO para todos os clientes)
     url: 'https://bguslrxqkrlrueafetzh.supabase.co',
-
-    // Chave pública (MESMA para todos — segura via RLS + schema)
     anonKey: 'sb_publishable_ZpEyI4ldSV5-ZbXKZFuYyQ_YRPXB4mz',
 
-    // ← NOVO: Identidade do cliente E seu schema isolado
     cliente: {
-        id: 'seunomeid',                  // slug
-        nome: 'Seu nome',
-        marca: 'Profissão ex:Advocacia',
-        schema: 'seunome',              // ← A CHAVE: schema isolado
+        id: 'TEMPLATE_ID',                // ex: "gleyciane", "erivaldo"
+        nome: 'TEMPLATE_NOME',            // ex: "Gleyciane Araújo"
+        marca: 'TEMPLATE_MARCA',          // ex: "Advocacia"
+        schema: 'TEMPLATE_SCHEMA',        // ex: "gleyciane"
     },
 
-    // Webhooks do n8n (preenchidos depois)
     n8n: {
         webhookLeads: '',
         webhookEventos: '',
     },
 
-    // Rotas internas
     rotas: {
         login: 'login.html',
         admin: 'admin.html',
@@ -39,25 +25,21 @@ window.SUPABASE_CONFIG = {
     },
 };
 
-/* ============================================================================
- * INICIALIZAÇÃO: Cria cliente Supabase com schema forçado
- * ============================================================================
- * Quando o SDK Supabase carrega, ele cria uma conexão que "sabe" qual schema
- * usar. Com isto, TODAS as queries vão para "gleyciane" automaticamente.
- * ========================================================================== */
-
 if (typeof supabase !== 'undefined') {
     const cfg = window.SUPABASE_CONFIG;
-    const schemaCliente = cfg.cliente.schema || 'public';
     
-    // Cria o cliente com o schema forçado
+    if (cfg.cliente.schema === 'TEMPLATE_SCHEMA' || cfg.cliente.schema === '') {
+        console.error('❌ ERRO: supabase-config.js ainda tem TEMPLATE_SCHEMA não preenchido!');
+        throw new Error('Configuração do Supabase incompleta. Veja console para detalhes.');
+    }
+    
+    const schemaCliente = cfg.cliente.schema;
     window.supabaseClient = supabase.createClient(
         cfg.url,
         cfg.anonKey,
-        {
-            db: { schema: schemaCliente },  // ← Força o schema "gleyciane"
-        }
+        { db: { schema: schemaCliente } }
     );
     
-    console.log(`[Supabase] Cliente conectado ao schema: ${schemaCliente}`);
+    console.log(`✅ [Supabase] Conectado para cliente: ${cfg.cliente.nome}`);
+    console.log(`   Schema: ${schemaCliente}`);
 }
