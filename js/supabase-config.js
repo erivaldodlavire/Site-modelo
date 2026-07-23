@@ -11,10 +11,10 @@ window.SUPABASE_CONFIG = {
     anonKey: 'sb_publishable_ZpEyI4ldSV5-ZbXKZFuYyQ_YRPXB4mz',
 
     cliente: {
-        id: 'TEMPLATE_ID',                    // ex: "gleyciane", "erivaldo"
-        nome: 'TEMPLATE_NOME',                // ex: "Gleyciane Araújo"
-        marca: 'TEMPLATE_MARCA',              // ex: "Advocacia"
-        schema: 'TEMPLATE_SCHEMA',            // ex: "gleyciane"
+        id: 'erivaldo',                    // ex: "gleyciane", "erivaldo"
+        nome: 'Erivaldo Silva',                // ex: "Gleyciane Araújo"
+        marca: 'Advocacia',              // ex: "Advocacia"
+        schema: 'erivaldo',            // ex: "gleyciane"
     },
 
     n8n: {
