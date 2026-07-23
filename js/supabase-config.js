@@ -19,10 +19,10 @@ window.SUPABASE_CONFIG = {
 
     // ← NOVO: Identidade do cliente E seu schema isolado
     cliente: {
-        id: 'gleyciane',                  // slug
-        nome: 'Gleyciane Araújo',
-        marca: 'Advocacia',
-        schema: 'gleyciane',              // ← A CHAVE: schema isolado
+        id: 'seunomeid',                  // slug
+        nome: 'Seu nome',
+        marca: 'Profissão ex:Advocacia',
+        schema: 'seunome',              // ← A CHAVE: schema isolado
     },
 
     // Webhooks do n8n (preenchidos depois)
