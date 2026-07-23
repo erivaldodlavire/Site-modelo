@@ -1,39 +1,63 @@
 /* ============================================================================
- * SUPABASE-CONFIG.JS — Configuração Central do Projeto
+ * SUPABASE-CONFIG.JS — Configuração Central (Multi-Tenant)
  * ============================================================================
  * WHITE-LABEL: Este é o ÚNICO arquivo que muda entre clientes/instâncias.
- * Ao vender para um novo cliente, você cria um novo projeto no Supabase
- * e troca apenas as chaves abaixo. Nenhum outro arquivo é tocado.
+ * 
+ * Para Gleyciane: schema 'gleyciane'
+ * Para Erivaldo:  schema 'erivaldo'
+ * Para Cliente X: schema 'cliente_x'
  *
- * SEGURANÇA: A "anon key" é PÚBLICA por design (ela vai para o navegador).
- * A proteção real vem das políticas de RLS (Row Level Security) definidas
- * no arquivo setup/01_auth_setup.sql — sem RLS ativo, NÃO coloque em produção.
+ * SEGURANÇA: A "anon key" é PÚBLICA (RLS + schema isolado protegem).
  * ========================================================================== */
 
 window.SUPABASE_CONFIG = {
-    // URL do projeto (Dashboard Supabase → Settings → API)
+    // URL do projeto (MESMO para todos os clientes)
     url: 'https://bguslrxqkrlrueafetzh.supabase.co',
 
-    // Chave pública (formato novo "publishable" — Dashboard → Settings → API Keys)
+    // Chave pública (MESMA para todos — segura via RLS + schema)
     anonKey: 'sb_publishable_ZpEyI4ldSV5-ZbXKZFuYyQ_YRPXB4mz',
 
-    // Identidade do cliente desta instância (usado em payloads do n8n e no título do login)
+    // ← NOVO: Identidade do cliente E seu schema isolado
     cliente: {
-        id: 'gleyciane-araujo',            // slug único (multi-tenant futuro)
+        id: 'gleyciane',                  // slug
         nome: 'Gleyciane Araújo',
         marca: 'Advocacia',
+        schema: 'gleyciane',              // ← A CHAVE: schema isolado
     },
 
-    // Webhooks do n8n (Fase 3 usa; centralizado aqui desde já)
+    // Webhooks do n8n (preenchidos depois)
     n8n: {
-        webhookLeads: '',                  // ex: https://n8n.seudominio.com/webhook/leads
-        webhookEventos: '',                // ex: cliques em botões críticos, intenções
+        webhookLeads: '',
+        webhookEventos: '',
     },
 
-    // Rotas internas do template (permite renomear arquivos sem caçar strings)
+    // Rotas internas
     rotas: {
         login: 'login.html',
         admin: 'admin.html',
         site: 'index.html',
     },
 };
+
+/* ============================================================================
+ * INICIALIZAÇÃO: Cria cliente Supabase com schema forçado
+ * ============================================================================
+ * Quando o SDK Supabase carrega, ele cria uma conexão que "sabe" qual schema
+ * usar. Com isto, TODAS as queries vão para "gleyciane" automaticamente.
+ * ========================================================================== */
+
+if (typeof supabase !== 'undefined') {
+    const cfg = window.SUPABASE_CONFIG;
+    const schemaCliente = cfg.cliente.schema || 'public';
+    
+    // Cria o cliente com o schema forçado
+    window.supabaseClient = supabase.createClient(
+        cfg.url,
+        cfg.anonKey,
+        {
+            db: { schema: schemaCliente },  // ← Força o schema "gleyciane"
+        }
+    );
+    
+    console.log(`[Supabase] Cliente conectado ao schema: ${schemaCliente}`);
+}
