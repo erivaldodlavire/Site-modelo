@@ -27,14 +27,30 @@ window.Auth = (() => {
     // ------------------------------------------------------------------ //
     // CLIENTE SUPABASE (singleton)
     // ------------------------------------------------------------------ //
+    // 🔒 CRÍTICO: o schema precisa vir daqui, senão o Supabase usa o
+    // padrão "public" — e TODOS os clientes (Gleyciane, Erivaldo, etc.)
+    // acabariam lendo/escrevendo na MESMA tabela public.site_config.
+    // Isso é exatamente o que causava o vazamento entre os sites.
     const cfg = window.SUPABASE_CONFIG;
+    const schemaCliente = cfg.cliente.schema;
+
+    if (!schemaCliente || schemaCliente.trim() === '') {
+        throw new Error('❌ [Auth] schema do cliente não definido em SUPABASE_CONFIG. Abortando para evitar vazamento entre tenants.');
+    }
+
     const client = supabase.createClient(cfg.url, cfg.anonKey, {
         auth: {
             persistSession: true,       // mantém sessão entre abas/reloads
             autoRefreshToken: true,     // renova o JWT automaticamente
             detectSessionInUrl: true,   // captura tokens de links de recuperação
         },
+        db: {
+            schema: schemaCliente,      // 🔒 força TODAS as queries deste cliente
+                                         //    para o schema isolado (ex: "erivaldo")
+        },
     });
+
+    console.log(`🔒 [Auth] Cliente Supabase isolado no schema: "${schemaCliente}"`);
 
     // Tradução amigável dos erros mais comuns do Supabase Auth
     const MAPA_ERROS = {
@@ -65,8 +81,6 @@ window.Auth = (() => {
         const { data, error } = await client.auth.signInWithPassword({ email, password: senha });
         if (error) return { ok: false, erro: traduzErro(error) };
 
-        // Flag gravada no metadata do usuário na criação (ver 01_auth_setup.sql):
-        // enquanto true, o painel exige troca da senha padrão de fábrica.
         const precisaTrocarSenha = data.user?.user_metadata?.must_change_password === true;
         return { ok: true, precisaTrocarSenha, usuario: data.user };
     }
@@ -80,7 +94,7 @@ window.Auth = (() => {
 
         const { error } = await client.auth.updateUser({
             password: novaSenha,
-            data: { must_change_password: false },  // desarma a flag
+            data: { must_change_password: false },
         });
         if (error) return { ok: false, erro: traduzErro(error) };
         return { ok: true };
@@ -89,20 +103,12 @@ window.Auth = (() => {
     // ------------------------------------------------------------------ //
     // 3) RECUPERAÇÃO DE SENHA VIA OTP (código de 6 dígitos)
     // ------------------------------------------------------------------ //
-    // 3a. Envia o código. `destino` pode ser e-mail OU telefone (+55...).
-    //     - E-mail: funciona nativamente. IMPORTANTE: no Dashboard →
-    //       Authentication → Email Templates → "Magic Link", inclua a
-    //       variável {{ .Token }} no corpo para o código de 6 dígitos aparecer.
-    //     - SMS: exige provedor configurado (Twilio/MessageBird) em
-    //       Authentication → Providers → Phone. A estrutura já está pronta.
     async function enviarOtp(destino) {
         const ehTelefone = /^\+?[0-9\s()-]{10,}$/.test(destino);
         const payload = ehTelefone
             ? { phone: destino.replace(/[\s()-]/g, '') }
             : { email: destino.trim().toLowerCase() };
 
-        // shouldCreateUser:false → OTP só funciona para usuários já cadastrados
-        // (impede que estranhos criem contas no painel do seu cliente).
         const { error } = await client.auth.signInWithOtp({
             ...payload,
             options: { shouldCreateUser: false },
@@ -111,8 +117,6 @@ window.Auth = (() => {
         return { ok: true, canal: ehTelefone ? 'sms' : 'email', destino };
     }
 
-    // 3b. Valida o código digitado. Se correto, o Supabase abre uma sessão
-    //     temporária que autoriza a redefinição de senha logo em seguida.
     async function verificarOtp(destino, token) {
         const ehTelefone = /^\+?[0-9\s()-]{10,}$/.test(destino);
         const payload = ehTelefone
@@ -124,7 +128,6 @@ window.Auth = (() => {
         return { ok: true, usuario: data.user };
     }
 
-    // 3c. Redefine a senha (chamado após verificarOtp OU link de recuperação).
     async function redefinirSenha(novaSenha) {
         const forca = validarForcaSenha(novaSenha);
         if (!forca.ok) return forca;
@@ -137,7 +140,6 @@ window.Auth = (() => {
         return { ok: true };
     }
 
-    // Alternativa clássica por LINK de e-mail (mantida para flexibilidade)
     async function enviarLinkRecuperacao(email) {
         const { error } = await client.auth.resetPasswordForEmail(email, {
             redirectTo: `${location.origin}/${cfg.rotas.login}?modo=recuperacao`,
@@ -149,9 +151,6 @@ window.Auth = (() => {
     // ------------------------------------------------------------------ //
     // 4) GUARDA DE PÁGINA — proteger o admin.html
     // ------------------------------------------------------------------ //
-    // Uso no topo do admin.js:  const user = await Auth.protegerPagina();
-    // Sem sessão válida → redirect imediato pro login (com ?voltar= para UX).
-    // Com sessão mas senha padrão ainda ativa → manda pro login trocar.
     async function protegerPagina() {
         const { data: { session } } = await client.auth.getSession();
 
@@ -164,8 +163,6 @@ window.Auth = (() => {
             return null;
         }
 
-        // Se a sessão morrer no meio do uso (logout em outra aba, token revogado),
-        // expulsa do painel na hora — sem "zumbis" logados.
         client.auth.onAuthStateChange((evento) => {
             if (evento === 'SIGNED_OUT') location.replace(cfg.rotas.login);
         });
@@ -186,7 +183,6 @@ window.Auth = (() => {
         return user;
     }
 
-    // Detecta chegada por link de recuperação (evento nativo do Supabase)
     function aoEntrarEmModoRecuperacao(callback) {
         client.auth.onAuthStateChange((evento) => {
             if (evento === 'PASSWORD_RECOVERY') callback();
@@ -197,7 +193,7 @@ window.Auth = (() => {
     // API PÚBLICA DO MÓDULO
     // ------------------------------------------------------------------ //
     return {
-        client,                    // exposto para admin.js/app.js consultarem tabelas
+        client,
         login,
         trocarSenhaPrimeiroAcesso,
         enviarOtp,
